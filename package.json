@@ -1,0 +1,42 @@
+{
+  "name": "knowledge-graph-visualizer",
+  "displayName": "Knowledge Graph Visualizer",
+  "description": "Interactive visualization of markdown-based knowledge graphs using d3-force",
+  "version": "0.1.0",
+  "publisher": "hypergraph",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "knowledgeGraph.visualize",
+        "title": "Visualize Knowledge Graph"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "knowledgeGraph.visualize",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

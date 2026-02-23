@@ -1,0 +1,209 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-foreground, #cccccc);
+  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+}
+
+/* Controls bar */
+#controls {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+#search {
+  width: 220px;
+  padding: 6px 10px;
+  border: 1px solid var(--vscode-input-border, #3c3c3c);
+  border-radius: 4px;
+  background: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, #cccccc);
+  font-size: 13px;
+  outline: none;
+}
+
+#search:focus {
+  border-color: var(--vscode-focusBorder, #007acc);
+}
+
+#search::placeholder {
+  color: var(--vscode-input-placeholderForeground, #888888);
+}
+
+/* Category filter buttons */
+#category-filters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--vscode-button-secondaryBackground, #3c3c3c);
+  border-radius: 12px;
+  background: var(--vscode-button-secondaryBackground, #3c3c3c);
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s;
+}
+
+.category-btn:hover {
+  opacity: 0.85;
+}
+
+.category-btn.active {
+  border-color: var(--vscode-focusBorder, #007acc);
+}
+
+.category-btn.dimmed {
+  opacity: 0.35;
+}
+
+.category-btn .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* Graph container */
+#graph-container {
+  width: 100%;
+  height: 100%;
+}
+
+#graph {
+  width: 100%;
+  height: 100%;
+}
+
+/* Tooltip */
+#tooltip {
+  position: fixed;
+  pointer-events: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--vscode-editorHoverWidget-background, #2d2d30);
+  border: 1px solid var(--vscode-editorHoverWidget-border, #454545);
+  color: var(--vscode-editorHoverWidget-foreground, #cccccc);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 380px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#tooltip.visible {
+  opacity: 1;
+}
+
+#tooltip .tooltip-title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: var(--vscode-foreground, #e0e0e0);
+}
+
+#tooltip .tooltip-summary {
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+#tooltip .tooltip-meta {
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+#tooltip .tooltip-meta span {
+  margin-right: 10px;
+}
+
+/* Legend */
+#legend {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--vscode-editorHoverWidget-background, #2d2d30);
+  border: 1px solid var(--vscode-editorHoverWidget-border, #454545);
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+#legend:hover {
+  opacity: 1;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* SVG elements */
+.node-circle {
+  cursor: pointer;
+  stroke-width: 1.5;
+  transition: opacity 0.2s;
+}
+
+.node-label {
+  pointer-events: none;
+  font-size: 11px;
+  fill: var(--vscode-foreground, #cccccc);
+  transition: opacity 0.2s;
+}
+
+.edge-path {
+  fill: none;
+  stroke: var(--vscode-foreground, #cccccc);
+  stroke-opacity: 0.15;
+  transition: stroke-opacity 0.2s;
+}
+
+.edge-label {
+  font-size: 9px;
+  fill: var(--vscode-foreground, #cccccc);
+  fill-opacity: 0;
+  pointer-events: none;
+  transition: fill-opacity 0.2s;
+}
+
+.arrow-marker {
+  fill: var(--vscode-foreground, #cccccc);
+  opacity: 0.3;
+}
