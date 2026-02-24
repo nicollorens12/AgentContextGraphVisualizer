@@ -1,8 +1,8 @@
 {
-  "name": "knowledge-graph-visualizer",
-  "displayName": "Knowledge Graph Visualizer",
-  "description": "Interactive visualization of markdown-based knowledge graphs using d3-force. Right-click a folder to see interconnected markdown files as a force-directed graph with search, filtering, and live updates.",
-  "version": "0.1.0",
+  "name": "agent-context-graph-visualizer",
+  "displayName": "Agent Context Graph Visualizer",
+  "description": "Interactive visualization of markdown-based knowledge graphs with agent-readiness analysis. Right-click a folder to see interconnected markdown files as a force-directed graph with health scores, broken link detection, token budgets, reachability analysis, and more.",
+  "version": "0.2.0",
   "publisher": "NicoLlorens",
   "license": "MIT",
   "repository": {
@@ -15,11 +15,13 @@
   },
   "icon": "icon.png",
   "keywords": [
+    "agent-context",
     "knowledge-graph",
     "markdown",
     "visualization",
     "d3",
-    "graph"
+    "graph",
+    "documentation-health"
   ],
   "engines": {
     "vscode": "^1.85.0"
@@ -32,14 +34,14 @@
   "contributes": {
     "commands": [
       {
-        "command": "knowledgeGraph.visualize",
-        "title": "Visualize Knowledge Graph"
+        "command": "agentContextGraph.visualize",
+        "title": "Visualize Agent Context Graph"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "knowledgeGraph.visualize",
+          "command": "agentContextGraph.visualize",
           "when": "explorerResourceIsFolder",
           "group": "navigation"
         }

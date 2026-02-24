@@ -9,8 +9,8 @@ export function createWebviewPanel(
   folderName: string
 ): vscode.WebviewPanel {
   const panel = vscode.window.createWebviewPanel(
-    'knowledgeGraph',
-    `Knowledge Graph: ${folderName}`,
+    'agentContextGraph',
+    `Agent Context Graph: ${folderName}`,
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -54,18 +54,56 @@ function getWebviewContent(
       font-src ${webview.cspSource};
       img-src ${webview.cspSource} data:;">
   <link rel="stylesheet" href="${stylesUri}">
-  <title>Knowledge Graph</title>
+  <title>Agent Context Graph</title>
 </head>
 <body>
   <div id="controls">
     <input type="text" id="search" placeholder="Search nodes..." autocomplete="off" />
     <div id="category-filters"></div>
+    <div id="control-buttons">
+      <button id="btn-fit" title="Fit graph to view">Fit</button>
+      <button id="btn-insights" title="Toggle graph insights">Insights</button>
+      <span class="btn-separator"></span>
+      <button id="btn-health" title="Color by health score">Health</button>
+      <button id="btn-budget" title="Size by token count">Budget</button>
+      <button id="btn-reachability" title="Reachability from entry point">Reachability</button>
+      <button id="btn-suggestions" title="Show backlink suggestions">Suggestions</button>
+      <button id="btn-path" title="Find shortest path between nodes">Path</button>
+      <span class="btn-separator"></span>
+      <button id="btn-export-index" title="Export _map.md index">Export Index</button>
+      <button id="btn-export-json" title="Export graph as JSON">Export JSON</button>
+    </div>
   </div>
-  <div id="graph-container">
-    <svg id="graph"></svg>
+  <div id="reachability-controls" class="hidden">
+    <label for="entry-point-select">Entry Point:</label>
+    <select id="entry-point-select"></select>
+    <span id="reachability-info"></span>
   </div>
+  <div id="main-layout">
+    <div id="graph-container">
+      <svg id="graph"></svg>
+    </div>
+    <div id="detail-panel" class="side-panel hidden">
+      <div class="panel-header">
+        <span class="panel-title">Node Details</span>
+        <button id="detail-close" class="panel-close">&times;</button>
+      </div>
+      <div id="detail-content"></div>
+    </div>
+    <div id="insights-panel" class="side-panel hidden">
+      <div class="panel-header">
+        <span class="panel-title">Graph Insights</span>
+        <button id="insights-close" class="panel-close">&times;</button>
+      </div>
+      <div id="insights-content"></div>
+    </div>
+  </div>
+  <div id="path-info" class="hidden">
+    <span id="path-info-text"></span>
+    <button id="path-clear">Clear</button>
+  </div>
+  <div id="mode-legend" class="hidden"></div>
   <div id="tooltip"></div>
-  <div id="legend"></div>
   <script nonce="${nonce}">
     const graphData = ${JSON.stringify(graphData)};
     const vscode = acquireVsCodeApi();

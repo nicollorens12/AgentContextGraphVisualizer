@@ -1,17 +1,21 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { GraphNode, GraphEdge, GraphData } from './types';
+import { GraphNode, GraphEdge, GraphData, ParseResult, RawExtractedLink } from './types';
 
-export function parseGraphData(rootFolder: string): GraphData {
+export function parseGraphData(rootFolder: string): ParseResult {
   const mdFiles = findMarkdownFiles(rootFolder);
   const nodeMap = new Map<string, GraphNode>();
   const edges: GraphEdge[] = [];
+  const contentMap = new Map<string, string>();
+  const allExtractedLinks: RawExtractedLink[] = [];
 
-  // Build nodes
+  // Build nodes (read content once, store in contentMap)
   for (const filePath of mdFiles) {
     const content = fs.readFileSync(filePath, 'utf-8');
     const relativePath = path.relative(rootFolder, filePath);
     const id = normalizePath(filePath);
+
+    contentMap.set(id, content);
 
     nodeMap.set(id, {
       id,
@@ -22,6 +26,21 @@ export function parseGraphData(rootFolder: string): GraphData {
       relativePath,
       inDegree: 0,
       outDegree: 0,
+      // Initialize agent-readiness fields with defaults
+      tokenEstimate: 0,
+      contentWordCount: 0,
+      keywords: [],
+      hasH1Title: false,
+      hasOverviewSection: false,
+      hasRelatedSection: false,
+      brokenOutgoingCount: 0,
+      bidirectionalRatio: 0,
+      healthScore: 0,
+      healthBreakdown: {
+        hasTitle: 0, hasOverview: 0, hasOutgoingLinks: 0, hasIncomingLinks: 0,
+        adequateLength: 0, hasRelatedSection: 0, noBrokenLinks: 0, bidirectionalRatio: 0,
+      },
+      warnings: [],
     });
   }
 
@@ -29,14 +48,27 @@ export function parseGraphData(rootFolder: string): GraphData {
   const seenEdges = new Set<string>();
 
   for (const filePath of mdFiles) {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const content = contentMap.get(normalizePath(filePath))!;
     const sourceId = normalizePath(filePath);
     const sourceDir = path.dirname(filePath);
+    const sourceNode = nodeMap.get(sourceId)!;
 
-    // Phase 1: Related section links (- [Title](path.md) -- Description)
+    // Phase 1: Related section links
     const relatedLinks = extractRelatedLinks(content, sourceDir);
     for (const link of relatedLinks) {
       const targetId = normalizePath(link.resolvedPath);
+      const existsOnDisk = fs.existsSync(link.resolvedPath);
+
+      allExtractedLinks.push({
+        sourceId,
+        sourceLabel: sourceNode.label,
+        sourceFilePath: filePath,
+        resolvedPath: link.resolvedPath,
+        label: link.label,
+        type: 'related',
+        existsOnDisk,
+      });
+
       if (nodeMap.has(targetId) && targetId !== sourceId) {
         const edgeKey = `${sourceId}->${targetId}`;
         if (!seenEdges.has(edgeKey)) {
@@ -51,10 +83,22 @@ export function parseGraphData(rootFolder: string): GraphData {
       }
     }
 
-    // Phase 2: Inline body links (deduplicated against Phase 1)
+    // Phase 2: Inline body links
     const inlineLinks = extractInlineLinks(content, sourceDir);
     for (const link of inlineLinks) {
       const targetId = normalizePath(link.resolvedPath);
+      const existsOnDisk = fs.existsSync(link.resolvedPath);
+
+      allExtractedLinks.push({
+        sourceId,
+        sourceLabel: sourceNode.label,
+        sourceFilePath: filePath,
+        resolvedPath: link.resolvedPath,
+        label: link.label,
+        type: 'inline',
+        existsOnDisk,
+      });
+
       if (nodeMap.has(targetId) && targetId !== sourceId) {
         const edgeKey = `${sourceId}->${targetId}`;
         if (!seenEdges.has(edgeKey)) {
@@ -78,10 +122,22 @@ export function parseGraphData(rootFolder: string): GraphData {
     if (targetNode) { targetNode.inDegree++; }
   }
 
-  return {
+  const graphData: GraphData = {
     nodes: Array.from(nodeMap.values()),
     edges,
+    // Initialize agent-readiness fields
+    brokenLinks: [],
+    backlinkSuggestions: [],
+    similaritySuggestions: [],
+    globalHealthScore: 0,
+    globalHealthBreakdown: {
+      hasTitle: 0, hasOverview: 0, hasOutgoingLinks: 0, hasIncomingLinks: 0,
+      adequateLength: 0, hasRelatedSection: 0, noBrokenLinks: 0, bidirectionalRatio: 0,
+    },
+    totalTokenEstimate: 0,
   };
+
+  return { graphData, contentMap, allExtractedLinks };
 }
 
 function findMarkdownFiles(dir: string): string[] {
@@ -141,8 +197,6 @@ function extractCategory(rootFolder: string, filePath: string): string {
 
   if (parts.length === 1) { return 'root'; }
 
-  // Use the deepest directory name for categorization
-  // e.g., architecture/decisions/001.md -> "decisions"
   const dirParts = parts.slice(0, -1);
   return dirParts[dirParts.length - 1];
 }
@@ -155,7 +209,6 @@ interface ParsedLink {
 function extractRelatedLinks(content: string, sourceDir: string): ParsedLink[] {
   const links: ParsedLink[] = [];
 
-  // Find ## Related section or ## Full Map section (for index.md)
   const sectionRegex = /^## (?:Related|Full Map|Quick Navigation|Architecture Decision Records|Company|Architecture|Components|Operations)\s*$/gm;
   let match;
 
@@ -166,7 +219,6 @@ function extractRelatedLinks(content: string, sourceDir: string): ParsedLink[] {
       ? content.slice(sectionStart)
       : content.slice(sectionStart, nextSection);
 
-    // Match list-style links: - [Title](path.md)
     const linkRegex = /- \[([^\]]+)\]\(([^)]+\.md)\)/g;
     let linkMatch;
     while ((linkMatch = linkRegex.exec(sectionContent)) !== null) {
@@ -181,10 +233,8 @@ function extractRelatedLinks(content: string, sourceDir: string): ParsedLink[] {
 function extractInlineLinks(content: string, sourceDir: string): ParsedLink[] {
   const links: ParsedLink[] = [];
 
-  // Remove Related section to avoid duplicates
   const withoutRelated = content.replace(/^## Related[\s\S]*$/m, '');
 
-  // Match [Title](path.md) but not image links ![...]
   const linkRegex = /(?<!!)\[([^\]]+)\]\(([^)]+\.md)\)/g;
   let match;
 

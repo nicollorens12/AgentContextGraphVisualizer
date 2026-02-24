@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import { parseGraphData } from './graphDataParser';
-import { updateWebviewData } from './webviewProvider';
 
 export function createFileWatcher(
   folderPath: string,
-  panel: vscode.WebviewPanel
+  panel: vscode.WebviewPanel,
+  onRefresh: () => void
 ): vscode.Disposable {
   const pattern = new vscode.RelativePattern(folderPath, '**/*.md');
   const watcher = vscode.workspace.createFileSystemWatcher(pattern);
@@ -14,8 +13,7 @@ export function createFileWatcher(
   const refresh = () => {
     if (debounceTimer) { clearTimeout(debounceTimer); }
     debounceTimer = setTimeout(() => {
-      const graphData = parseGraphData(folderPath);
-      updateWebviewData(panel, graphData);
+      onRefresh();
     }, 500);
   };
 
